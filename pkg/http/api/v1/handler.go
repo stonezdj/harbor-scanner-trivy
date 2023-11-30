@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/etc"
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/harbor"
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/http/api"
@@ -15,9 +19,6 @@ import (
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/persistence"
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/queue"
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/trivy"
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -253,6 +254,7 @@ func (h *requestHandler) GetMetadata(res http.ResponseWriter, _ *http.Request) {
 				},
 				ProducesMIMETypes: []string{
 					api.MimeTypeSecurityVulnerabilityReport.String(),
+					api.MimeTypeSBOM.String(),
 				},
 			},
 		},

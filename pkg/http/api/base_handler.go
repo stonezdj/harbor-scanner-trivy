@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aquasecurity/harbor-scanner-trivy/pkg/harbor"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/aquasecurity/harbor-scanner-trivy/pkg/harbor"
 )
 
 const (
@@ -21,6 +22,7 @@ var MimeTypeVersion = map[string]string{"version": "1.0"}
 
 var MimeTypeOCIImageManifest = MimeType{Type: "application", Subtype: "vnd.oci.image.manifest.v1+json"}
 var MimeTypeDockerImageManifestV2 = MimeType{Type: "application", Subtype: "vnd.docker.distribution.manifest.v2+json"}
+var MimeTypeSBOM = MimeType{Type: "application", Subtype: "application/vnd.security.sbom.repo+json", Params: MimeTypeVersion}
 
 var MimeTypeScanResponse = MimeType{Type: "application", Subtype: "vnd.scanner.adapter.scan.response+json", Params: MimeTypeVersion}
 
