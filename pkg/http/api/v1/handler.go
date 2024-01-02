@@ -86,6 +86,8 @@ func (h *requestHandler) AcceptScanRequest(res http.ResponseWriter, req *http.Re
 		return
 	}
 
+	slog.Info("Recieved a scan request %+v", scanRequest)
+
 	if validationError := h.ValidateScanRequest(scanRequest); validationError != nil {
 		slog.Error("Error while validating scan request", slog.String("err", validationError.Message))
 		h.WriteJSONError(res, *validationError)

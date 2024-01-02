@@ -72,8 +72,19 @@ type Artifact struct {
 }
 
 type ScanRequest struct {
-	Registry Registry `json:"registry"`
-	Artifact Artifact `json:"artifact"`
+	Registry    Registry  `json:"registry"`
+	Artifact    Artifact  `json:"artifact"`
+	RequestType *ScanType `json:"enabled_capabilities"`
+}
+
+// ScanType represent the type of the scan request
+type ScanType struct {
+	// Type sets the type of the scan, it could be sbom or vulnerability, default is vulnerability
+	Type string `json:"type"`
+	// ProducesMimeTypes defines scanreport should be
+	ProducesMimeTypes []string `json:"producesMimeTypes"`
+	// Parameters extra parameters
+	Parameters map[string]string `json:"parameters"`
 }
 
 // GetImageRef returns Docker image reference for this ScanRequest.
