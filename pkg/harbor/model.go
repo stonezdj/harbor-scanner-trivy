@@ -72,8 +72,15 @@ type Artifact struct {
 }
 
 type ScanRequest struct {
-	Registry Registry `json:"registry"`
-	Artifact Artifact `json:"artifact"`
+	Registry            Registry            `json:"registry"`
+	Artifact            Artifact            `json:"artifact"`
+	EnabledCapabilities []EnabledCapability `json:"enabled_capabilities"`
+}
+
+type EnabledCapability struct {
+	Type             string            `json:"type"`
+	ProduceMimeTypes []string          `json:"produce_mime_types,omitempty"`
+	Parameters       map[string]string `json:"parameters,omitempty"`
 }
 
 // GetImageRef returns Docker image reference for this ScanRequest.
@@ -158,4 +165,88 @@ type Capability struct {
 type Error struct {
 	HTTPCode int    `json:"-"`
 	Message  string `json:"message"`
+}
+
+// SBOMReport is a software bill of materials report.
+// defined in the swagger https://raw.githubusercontent.com/goharbor/pluggable-scanner-spec/master/api/spec/scanner-adapter-openapi-v1.2.yaml
+type SBOMReport struct {
+	GeneratedAt      time.Time              `json:"generated_at"`
+	Artifact         Artifact               `json:"artifact"`
+	Scanner          Scanner                `json:"scanner"`
+	VendorAttributes map[string]interface{} `json:"vendor_attributes,omitempty"`
+	MediaType        string                 `json:"media_type"`
+	SBOM             string                 `json:"sbom"`
+}
+
+// SBOMSPDXReport is a software bill of materials report with SPDX format
+// schema defined in https://github.com/spdx/spdx-spec/blob/master/schemas/spdx-schema.json
+type SBOMSPDXReport struct {
+	SpdxVersion string `json:"spdxVersion"`
+	DataLicense string `json:"dataLicense"`
+	// SPDXID is a unique identifier of the SPDX document
+	SPDXID string `json:"spdxID"`
+	Name   string `json:"name"`
+	// SPDXDocumentNamespace is a unique namespace of the SPDX document
+	SPDXDocumentNamespace string       `json:"documentNamespace"`
+	CreationInfo          CreationInfo `json:"creationInfo"`
+	// Packages includes all packages contained in the SPDX document
+	Packages []Package `json:"packages"`
+	// Relationships         []string     `json:"relationships"`
+}
+
+type CreationInfo struct {
+	LicenseListVersion string    `json:"licenseListVersion"`
+	Creators           []string  `json:"creators"`
+	Created            time.Time `json:"created"`
+}
+
+type Package struct {
+	Name                  string   `json:"name"`
+	SPDXID                string   `json:"SPDXID"`
+	VersionInfo           string   `json:"versionInfo"`
+	DownloadLocation      string   `json:"downloadLocation"`
+	CopyRightText         string   `json:"copyRightText"`
+	primaryPackagePurpose string   `json:"primaryPackagePurpose"`
+	Checksums             []string `json:"checksums"`
+}
+
+// SBOMCycloneDXReport is a software bill of materials report with CycloneDX format
+// schema defined in https://cyclonedx.org/docs/1.5/json/#bomFormat
+type SBOMCycloneDXReport struct {
+	BOMFormat string `json:"bomFormat"`
+	// SpecVersion is the version of the CycloneDX specification
+	SpecVersion string `json:"specVersion"`
+	// SerialNumber is a unique identifier for the BOM
+	SerialNumber string `json:"serialNumber"`
+	// Version is the version of the BOM
+	Version string `json:"version"`
+	// Metadata is a list of metadata entries
+	Metadata Metadata `json:"metadata"`
+	// Components is a list of components
+	Components []Component `json:"components"`
+}
+
+type Metadata struct {
+	// Timestamp is the timestamp of the BOM
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Component struct {
+	// Type is the type of the component
+	Type string `json:"type"`
+	// BOMRef is a reference to the BOM
+	BOMRef string `json:"bom-ref"`
+	// Name is the name of the component
+	Name string `json:"name"`
+	// Version is the version of the component
+	Version string `json:"version"`
+	// PURL is the package URL of the component
+	PURL string `json:"purl"`
+	// Licenses is a list of licenses of the component
+	Licenses []License `json:"licenses"`
+}
+
+type License struct {
+	// Name is the name of the license
+	Name string `json:"name"`
 }
