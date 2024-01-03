@@ -3,12 +3,15 @@ package queue
 import (
 	"context"
 	"crypto/rand"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"time"
 
 	"github.com/redis/go-redis/v9"
+	_ "golang.org/x/exp/slog"
 	"golang.org/x/xerrors"
 
 	"github.com/aquasecurity/harbor-scanner-trivy/pkg/etc"
@@ -18,6 +21,9 @@ import (
 )
 
 const scanArtifactJobName = "scan_artifact"
+
+//go:embed testdata/alpine.spdx.json
+var sbomfileByte []byte
 
 type Enqueuer interface {
 	Enqueue(ctx context.Context, request harbor.ScanRequest) (job.ScanJob, error)
@@ -49,6 +55,7 @@ func NewEnqueuer(config etc.JobQueue, rdb *redis.Client, store persistence.Store
 
 func (e *enqueuer) Enqueue(ctx context.Context, request harbor.ScanRequest) (job.ScanJob, error) {
 	slog.Debug("Enqueueing scan job")
+
 	j := Job{
 		Name: scanArtifactJobName,
 		ID:   makeIdentifier(),
@@ -62,9 +69,29 @@ func (e *enqueuer) Enqueue(ctx context.Context, request harbor.ScanRequest) (job
 		Status: job.Queued,
 	}
 
+	if request.RequestType.Type == "sbom" {
+		slog.Info(string(sbomfileByte))
+		sbom := map[string]interface{}{}
+		if err := json.Unmarshal(sbomfileByte, &sbom); err != nil {
+			slog.Info("failed to unmarshal sbom file")
+		}
+		scanJob.Status = job.Finished
+		scanJob.Report = harbor.ScanReport{
+			GeneratedAt: time.Now(),
+			Artifact:    request.Artifact,
+			MediaType:   "application/spdx+json",
+			Sbom:        sbom,
+		}
+	}
+
 	// Save the job status to Redis
 	if err := e.store.Create(ctx, scanJob); err != nil {
 		return job.ScanJob{}, xerrors.Errorf("creating scan job %v", err)
+	}
+
+	// handle sbom request
+	if request.RequestType.Type == "sbom" {
+		return scanJob, nil
 	}
 
 	b, err := json.Marshal(j)

@@ -114,11 +114,14 @@ type ScanResponse struct {
 }
 
 type ScanReport struct {
-	GeneratedAt     time.Time           `json:"generated_at"`
-	Artifact        Artifact            `json:"artifact"`
-	Scanner         Scanner             `json:"scanner"`
-	Severity        Severity            `json:"severity"`
-	Vulnerabilities []VulnerabilityItem `json:"vulnerabilities"`
+	GeneratedAt      time.Time              `json:"generated_at"`
+	Artifact         Artifact               `json:"artifact"`
+	Scanner          Scanner                `json:"scanner"`
+	Severity         Severity               `json:"severity,omitempty"`
+	Vulnerabilities  []VulnerabilityItem    `json:"vulnerabilities,omitempty"`
+	VendorAttributes map[string]interface{} `json:"vendor_attributes,omitempty"`
+	MediaType        string                 `json:"media_type,omitempty"`
+	Sbom             map[string]interface{} `json:"sbom,omitempty"`
 }
 
 type Layer struct {

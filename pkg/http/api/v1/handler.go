@@ -86,7 +86,10 @@ func (h *requestHandler) AcceptScanRequest(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	slog.Info("Recieved a scan request %+v", scanRequest)
+	if content, err := json.Marshal(scanRequest); err == nil {
+		slog.Info(string(content))
+	}
+	slog.Info(fmt.Sprintf("Received a scan request %+v", scanRequest))
 
 	if validationError := h.ValidateScanRequest(scanRequest); validationError != nil {
 		slog.Error("Error while validating scan request", slog.String("err", validationError.Message))
@@ -142,6 +145,7 @@ func (h *requestHandler) ValidateScanRequest(req harbor.ScanRequest) *harbor.Err
 }
 
 func (h *requestHandler) GetScanReport(res http.ResponseWriter, req *http.Request) {
+	slog.Info("receive get report request")
 	var reportMimeType api.MimeType
 
 	if err := reportMimeType.FromAcceptHeader(req.Header.Get(api.HeaderAccept)); err != nil {
@@ -163,6 +167,8 @@ func (h *requestHandler) GetScanReport(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
+	slog.Info(fmt.Sprintf("scanJobID:%v", scanJobID))
+
 	reqLog := slog.With(slog.String("scan_job_id", scanJobID))
 
 	scanJob, err := h.store.Get(req.Context(), scanJobID)
@@ -175,6 +181,8 @@ func (h *requestHandler) GetScanReport(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
+	slog.Info("parse the scan job")
+
 	if scanJob == nil {
 		reqLog.Error("Cannot find scan job")
 		h.WriteJSONError(res, harbor.Error{
@@ -183,6 +191,7 @@ func (h *requestHandler) GetScanReport(res http.ResponseWriter, req *http.Reques
 		})
 		return
 	}
+	slog.Info(fmt.Sprintf("get scan job status: %v", scanJob.Status.String()))
 
 	scanJobLog := reqLog.With(slog.String("scan_job_status", scanJob.Status.String()))
 
@@ -210,7 +219,7 @@ func (h *requestHandler) GetScanReport(res http.ResponseWriter, req *http.Reques
 		})
 		return
 	}
-
+	slog.Info("get scan job complete")
 	h.WriteJSON(res, scanJob.Report, reportMimeType, http.StatusOK)
 }
 
