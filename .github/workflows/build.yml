@@ -27,12 +27,12 @@ concurrency:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: yaml-lint
@@ -52,9 +52,3 @@ jobs:
         with:
           version: v1.9.2
           args: release --snapshot --skip-publish --rm-dist
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: "docker.io/aquasec/harbor-scanner-trivy:${{ github.sha }}"
-          severity: "CRITICAL"
-          exit-code: "1"

@@ -17,7 +17,7 @@ env:
   CHART_DIR: helm/harbor-scanner-trivy
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
           ref: "${{ github.event.inputs.ref }}"
           fetch-depth: 1
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
           version: v3.7.0
       - name: Download Chart Releaser

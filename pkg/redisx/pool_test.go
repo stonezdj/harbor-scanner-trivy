@@ -11,12 +11,11 @@ import (
 )
 
 func TestGetPool(t *testing.T) {
-
-	t.Run("Should return error when configured to connect to secure redis", func(t *testing.T) {
+	t.Run("Should not return error when configured to connect to secure redis", func(t *testing.T) {
 		_, err := NewClient(etc.RedisPool{
 			URL: "rediss://hostname:6379",
 		})
-		assert.EqualError(t, err, "invalid redis URL scheme: rediss")
+		assert.NoError(t, err)
 	})
 
 	t.Run("Should return error when configured with unsupported url scheme", func(t *testing.T) {
@@ -37,6 +36,7 @@ func TestParseSentinelURL(t *testing.T) {
 		{
 			configURL: "redis+sentinel://harbor:s3cret@somehost:26379,otherhost:26479/mymaster/3",
 			expectedSentinelURL: SentinelURL{
+				Username: "harbor",
 				Password: "s3cret",
 				Addrs: []string{
 					"somehost:26379",
@@ -49,6 +49,7 @@ func TestParseSentinelURL(t *testing.T) {
 		{
 			configURL: "redis+sentinel://:s3cret@somehost:26379,otherhost:26479/mymaster/5",
 			expectedSentinelURL: SentinelURL{
+				Username: "",
 				Password: "s3cret",
 				Addrs: []string{
 					"somehost:26379",
@@ -61,7 +62,21 @@ func TestParseSentinelURL(t *testing.T) {
 		{
 			configURL: "redis+sentinel://:s3cret@somehost:26379,otherhost:26479/mymaster",
 			expectedSentinelURL: SentinelURL{
+				Username: "",
 				Password: "s3cret",
+				Addrs: []string{
+					"somehost:26379",
+					"otherhost:26479",
+				},
+				MonitorName: "mymaster",
+				Database:    0,
+			},
+		},
+		{
+			configURL: "rediss+sentinel://foo:mypwd@somehost:26379,otherhost:26479/mymaster",
+			expectedSentinelURL: SentinelURL{
+				Username: "foo",
+				Password: "mypwd",
 				Addrs: []string{
 					"somehost:26379",
 					"otherhost:26479",

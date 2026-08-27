@@ -2,6 +2,7 @@ package redisx
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -25,9 +26,9 @@ func NewClient(config etc.RedisPool) (*redis.Client, error) {
 	}
 
 	switch configURL.Scheme {
-	case "redis":
+	case "redis", "rediss":
 		return newInstancePool(config)
-	case "redis+sentinel":
+	case "redis+sentinel", "rediss+sentinel":
 		return newSentinelPool(configURL, config)
 	default:
 		return nil, xerrors.Errorf("invalid redis URL scheme: %s", configURL.Scheme)
@@ -36,8 +37,8 @@ func NewClient(config etc.RedisPool) (*redis.Client, error) {
 
 // redis://user:password@host:port/db-number
 func newInstancePool(config etc.RedisPool) (*redis.Client, error) {
-	// TODO: Ask the Harbor team about why they use "idle_timeout_seconds" instead of "idle_timeout".
-	config.URL = strings.ReplaceAll(config.URL, "idle_timeout_seconds", "idle_timeout")
+	// `idle_timeout_seconds` is used in Harbor for backward compatibility.
+	config.URL = strings.ReplaceAll(config.URL, "idle_timeout_seconds=", "idle_timeout=")
 
 	slog.Debug("Constructing connection pool for Redis", slog.String("url", config.URL))
 	options, err := redis.ParseURL(config.URL)
@@ -69,6 +70,7 @@ func newSentinelPool(configURL *url.URL, config etc.RedisPool) (*redis.Client, e
 		SentinelAddrs: sentinelURL.Addrs,
 		DB:            sentinelURL.Database,
 		Password:      sentinelURL.Password,
+		Username:      sentinelURL.Username,
 
 		DialTimeout:  config.ConnectionTimeout,
 		ReadTimeout:  config.ReadTimeout,
@@ -81,14 +83,25 @@ func newSentinelPool(configURL *url.URL, config etc.RedisPool) (*redis.Client, e
 			slog.Debug("Connecting to Redis sentinel", slog.String("connection", cn.String()))
 			return nil
 		},
+		TLSConfig: getTLSconfig(configURL),
 	}), nil
 }
 
 type SentinelURL struct {
 	Password    string
+	Username    string
 	Addrs       []string
 	MonitorName string
 	Database    int
+}
+
+func getTLSconfig(configURL *url.URL) *tls.Config {
+	if configURL.Scheme == "rediss+sentinel" {
+		return &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+	return nil
 }
 
 func ParseSentinelURL(configURL *url.URL) (sentinelURL SentinelURL, err error) {
@@ -99,6 +112,7 @@ func ParseSentinelURL(configURL *url.URL) (sentinelURL SentinelURL, err error) {
 	}
 
 	if user := configURL.User; user != nil {
+		sentinelURL.Username = user.Username()
 		if password, set := user.Password(); set {
 			sentinelURL.Password = password
 		}

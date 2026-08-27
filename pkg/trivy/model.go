@@ -24,6 +24,7 @@ type Metadata struct {
 type VersionInfo struct {
 	Version         string    `json:"Version,omitempty"`
 	VulnerabilityDB *Metadata `json:"VulnerabilityDB"`
+	JavaDB          *Metadata `json:"JavaDB"`
 }
 
 type Layer struct {
@@ -38,10 +39,16 @@ type CVSSInfo struct {
 	V3Score  *float32 `json:"V3Score,omitempty"`
 }
 
+type Report struct {
+	SBOM            any
+	Vulnerabilities []Vulnerability
+}
+
 type Vulnerability struct {
 	VulnerabilityID  string              `json:"VulnerabilityID"`
 	PkgName          string              `json:"PkgName"`
 	InstalledVersion string              `json:"InstalledVersion"`
+	Status           string              `json:"Status"`
 	FixedVersion     string              `json:"FixedVersion"`
 	Title            string              `json:"Title"`
 	Description      string              `json:"Description"`

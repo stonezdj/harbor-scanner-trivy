@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aquasecurity/harbor-scanner-trivy/pkg/harbor"
 	"github.com/caarlos0/env/v6"
 )
 
@@ -25,19 +24,24 @@ type Config struct {
 }
 
 type Trivy struct {
-	CacheDir       string        `env:"SCANNER_TRIVY_CACHE_DIR" envDefault:"/home/scanner/.cache/trivy"`
-	ReportsDir     string        `env:"SCANNER_TRIVY_REPORTS_DIR" envDefault:"/home/scanner/.cache/reports"`
-	DebugMode      bool          `env:"SCANNER_TRIVY_DEBUG_MODE" envDefault:"false"`
-	VulnType       string        `env:"SCANNER_TRIVY_VULN_TYPE" envDefault:"os,library"`
-	SecurityChecks string        `env:"SCANNER_TRIVY_SECURITY_CHECKS" envDefault:"vuln"`
-	Severity       string        `env:"SCANNER_TRIVY_SEVERITY" envDefault:"UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"`
-	IgnoreUnfixed  bool          `env:"SCANNER_TRIVY_IGNORE_UNFIXED" envDefault:"false"`
-	IgnorePolicy   string        `env:"SCANNER_TRIVY_IGNORE_POLICY"`
-	SkipUpdate     bool          `env:"SCANNER_TRIVY_SKIP_UPDATE" envDefault:"false"`
-	OfflineScan    bool          `env:"SCANNER_TRIVY_OFFLINE_SCAN" envDefault:"false"`
-	GitHubToken    string        `env:"SCANNER_TRIVY_GITHUB_TOKEN"`
-	Insecure       bool          `env:"SCANNER_TRIVY_INSECURE" envDefault:"false"`
-	Timeout        time.Duration `env:"SCANNER_TRIVY_TIMEOUT" envDefault:"5m0s"`
+	CacheDir         string        `env:"SCANNER_TRIVY_CACHE_DIR" envDefault:"/home/scanner/.cache/trivy"`
+	ReportsDir       string        `env:"SCANNER_TRIVY_REPORTS_DIR" envDefault:"/home/scanner/.cache/reports"`
+	DebugMode        bool          `env:"SCANNER_TRIVY_DEBUG_MODE" envDefault:"false"`
+	VulnType         string        `env:"SCANNER_TRIVY_VULN_TYPE" envDefault:"os,library"`
+	Scanners         string        `env:"SCANNER_TRIVY_SECURITY_CHECKS" envDefault:"vuln"`
+	Severity         string        `env:"SCANNER_TRIVY_SEVERITY" envDefault:"UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL"`
+	IgnoreUnfixed    bool          `env:"SCANNER_TRIVY_IGNORE_UNFIXED" envDefault:"false"`
+	IgnorePolicy     string        `env:"SCANNER_TRIVY_IGNORE_POLICY"`
+	SkipDBUpdate     bool          `env:"SCANNER_TRIVY_SKIP_UPDATE" envDefault:"false"`
+	SkipJavaDBUpdate bool          `env:"SCANNER_TRIVY_SKIP_JAVA_DB_UPDATE" envDefault:"false"`
+	DBRepository     string        `env:"SCANNER_TRIVY_DB_REPOSITORY"`
+	JavaDBRepository string        `env:"SCANNER_TRIVY_JAVA_DB_REPOSITORY"`
+	OfflineScan      bool          `env:"SCANNER_TRIVY_OFFLINE_SCAN" envDefault:"false"`
+	GitHubToken      string        `env:"SCANNER_TRIVY_GITHUB_TOKEN"`
+	Insecure            bool          `env:"SCANNER_TRIVY_INSECURE" envDefault:"false"`
+	VEXSource           string        `env:"SCANNER_TRIVY_VEX_SOURCE"`
+	SkipVEXRepoUpdate   bool          `env:"SCANNER_TRIVY_SKIP_VEX_REPO_UPDATE" envDefault:"false"`
+	Timeout             time.Duration `env:"SCANNER_TRIVY_TIMEOUT" envDefault:"5m0s"`
 }
 
 type API struct {
@@ -48,6 +52,7 @@ type API struct {
 	ReadTimeout    time.Duration `env:"SCANNER_API_SERVER_READ_TIMEOUT" envDefault:"15s"`
 	WriteTimeout   time.Duration `env:"SCANNER_API_SERVER_WRITE_TIMEOUT" envDefault:"15s"`
 	IdleTimeout    time.Duration `env:"SCANNER_API_SERVER_IDLE_TIMEOUT" envDefault:"60s"`
+	MetricsEnabled bool          `env:"SCANNER_API_SERVER_METRICS_ENABLED" envDefault:"true"`
 }
 
 func (c *API) IsTLSEnabled() bool {
@@ -105,16 +110,4 @@ func GetConfig() (Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func GetScannerMetadata() harbor.Scanner {
-	version, ok := os.LookupEnv("TRIVY_VERSION")
-	if !ok {
-		version = "Unknown"
-	}
-	return harbor.Scanner{
-		Name:    "Trivy",
-		Vendor:  "Aqua Security",
-		Version: version,
-	}
 }

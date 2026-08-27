@@ -40,7 +40,7 @@ func main() {
 
 	ctx := context.Background()
 	if err := run(ctx, info); err != nil {
-		slog.Error("Error: %v", err)
+		slog.Error("Unexpected error:", slog.String("Error", err.Error()))
 		os.Exit(1)
 	}
 }

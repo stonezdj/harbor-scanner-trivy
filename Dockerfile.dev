@@ -1,8 +1,8 @@
 # That's the only place where you're supposed to specify version of Trivy.
-ARG TRIVY_VERSION=0.46.0
+ARG TRIVY_VERSION=0.74.0
 ARG SKAFFOLD_GO_GCFLAGS
 
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /go/src/github.com/aquasecurity/harbor-scanner-trivy
 
@@ -29,5 +29,7 @@ RUN adduser -u 10000 -D -g '' scanner scanner
 COPY --from=builder /go/src/github.com/aquasecurity/harbor-scanner-trivy/scanner-trivy /home/scanner/bin/scanner-trivy
 
 ENV TRIVY_VERSION=${TRIVY_VERSION}
+
+USER scanner
 
 ENTRYPOINT ["/home/scanner/bin/scanner-trivy"]

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aquasecurity/harbor-scanner-trivy/pkg/harbor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,21 +59,22 @@ func TestGetConfig(t *testing.T) {
 			},
 			expectedConfig: Config{
 				API: API{
-					Addr:         ":8080",
-					ReadTimeout:  parseDuration(t, "15s"),
-					WriteTimeout: parseDuration(t, "15s"),
-					IdleTimeout:  parseDuration(t, "60s"),
+					Addr:           ":8080",
+					ReadTimeout:    parseDuration(t, "15s"),
+					WriteTimeout:   parseDuration(t, "15s"),
+					IdleTimeout:    parseDuration(t, "60s"),
+					MetricsEnabled: true,
 				},
 				Trivy: Trivy{
-					DebugMode:      true,
-					CacheDir:       "/home/scanner/.cache/trivy",
-					ReportsDir:     "/home/scanner/.cache/reports",
-					VulnType:       "os,library",
-					SecurityChecks: "vuln",
-					Severity:       "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-					Insecure:       false,
-					GitHubToken:    "",
-					Timeout:        parseDuration(t, "5m0s"),
+					DebugMode:   true,
+					CacheDir:    "/home/scanner/.cache/trivy",
+					ReportsDir:  "/home/scanner/.cache/reports",
+					VulnType:    "os,library",
+					Scanners:    "vuln",
+					Severity:    "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+					Insecure:    false,
+					GitHubToken: "",
+					Timeout:     parseDuration(t, "5m0s"),
 				},
 				RedisPool: RedisPool{
 					URL:               "redis://localhost:6379",
@@ -99,21 +99,22 @@ func TestGetConfig(t *testing.T) {
 			name: "Should return default config",
 			expectedConfig: Config{
 				API: API{
-					Addr:         ":8080",
-					ReadTimeout:  parseDuration(t, "15s"),
-					WriteTimeout: parseDuration(t, "15s"),
-					IdleTimeout:  parseDuration(t, "60s"),
+					Addr:           ":8080",
+					ReadTimeout:    parseDuration(t, "15s"),
+					WriteTimeout:   parseDuration(t, "15s"),
+					IdleTimeout:    parseDuration(t, "60s"),
+					MetricsEnabled: true,
 				},
 				Trivy: Trivy{
-					DebugMode:      false,
-					CacheDir:       "/home/scanner/.cache/trivy",
-					ReportsDir:     "/home/scanner/.cache/reports",
-					VulnType:       "os,library",
-					SecurityChecks: "vuln",
-					Severity:       "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-					Insecure:       false,
-					GitHubToken:    "",
-					Timeout:        parseDuration(t, "5m0s"),
+					DebugMode:   false,
+					CacheDir:    "/home/scanner/.cache/trivy",
+					ReportsDir:  "/home/scanner/.cache/reports",
+					VulnType:    "os,library",
+					Scanners:    "vuln",
+					Severity:    "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+					Insecure:    false,
+					GitHubToken: "",
+					Timeout:     parseDuration(t, "5m0s"),
 				},
 				RedisPool: RedisPool{
 					URL:               "redis://localhost:6379",
@@ -158,7 +159,9 @@ func TestGetConfig(t *testing.T) {
 				"SCANNER_TRIVY_SKIP_UPDATE":     "true",
 				"SCANNER_TRIVY_OFFLINE_SCAN":    "true",
 				"SCANNER_TRIVY_GITHUB_TOKEN":    "<GITHUB_TOKEN>",
-				"SCANNER_TRIVY_TIMEOUT":         "15m30s",
+				"SCANNER_TRIVY_TIMEOUT":              "15m30s",
+				"SCANNER_TRIVY_VEX_SOURCE":           "oci",
+				"SCANNER_TRIVY_SKIP_VEX_REPO_UPDATE": "true",
 
 				"SCANNER_STORE_REDIS_NAMESPACE":    "store.ns",
 				"SCANNER_STORE_REDIS_SCAN_JOB_TTL": "2h45m15s",
@@ -166,34 +169,42 @@ func TestGetConfig(t *testing.T) {
 				"SCANNER_JOB_QUEUE_REDIS_NAMESPACE":    "job-queue.ns",
 				"SCANNER_JOB_QUEUE_WORKER_CONCURRENCY": "3",
 
-				"SCANNER_REDIS_URL":               "redis://harbor-harbor-redis:6379",
-				"SCANNER_REDIS_POOL_MAX_ACTIVE":   "3",
-				"SCANNER_REDIS_POOL_MAX_IDLE":     "7",
-				"SCANNER_REDIS_POOL_IDLE_TIMEOUT": "3m",
+				"SCANNER_REDIS_URL":                  "redis://harbor-harbor-redis:6379",
+				"SCANNER_REDIS_POOL_MAX_ACTIVE":      "3",
+				"SCANNER_REDIS_POOL_MAX_IDLE":        "7",
+				"SCANNER_REDIS_POOL_IDLE_TIMEOUT":    "3m",
+				"SCANNER_API_SERVER_METRICS_ENABLED": "false",
 			},
 			expectedConfig: Config{
 				API: API{
 					Addr:           ":4200",
 					TLSCertificate: "/certs/tls.crt",
 					TLSKey:         "/certs/tls.key",
-					ClientCAs:      []string{"/certs/tls1.crt", "/certs/tls2.crt"},
+					ClientCAs: []string{
+						"/certs/tls1.crt",
+						"/certs/tls2.crt",
+					},
 					ReadTimeout:    parseDuration(t, "1h"),
 					WriteTimeout:   parseDuration(t, "2m"),
 					IdleTimeout:    parseDuration(t, "3m10s"),
+					MetricsEnabled: false,
 				},
 				Trivy: Trivy{
-					CacheDir:       "/home/scanner/trivy-cache",
-					ReportsDir:     "/home/scanner/trivy-reports",
-					DebugMode:      true,
-					VulnType:       "os,library",
-					SecurityChecks: "vuln",
-					Severity:       "CRITICAL",
-					IgnoreUnfixed:  true,
-					SkipUpdate:     true,
-					OfflineScan:    true,
-					Insecure:       true,
-					GitHubToken:    "<GITHUB_TOKEN>",
-					Timeout:        parseDuration(t, "15m30s"),
+					CacheDir:         "/home/scanner/trivy-cache",
+					ReportsDir:       "/home/scanner/trivy-reports",
+					DebugMode:        true,
+					VulnType:         "os,library",
+					Scanners:         "vuln",
+					Severity:         "CRITICAL",
+					IgnoreUnfixed:    true,
+					SkipDBUpdate:     true,
+					SkipJavaDBUpdate: false,
+					OfflineScan:      true,
+					Insecure:         true,
+					GitHubToken:       "<GITHUB_TOKEN>",
+					Timeout:           parseDuration(t, "15m30s"),
+					VEXSource:         "oci",
+					SkipVEXRepoUpdate: true,
 				},
 				RedisPool: RedisPool{
 					URL:               "redis://harbor-harbor-redis:6379",
@@ -222,30 +233,6 @@ func TestGetConfig(t *testing.T) {
 			config, err := GetConfig()
 			assert.Equal(t, tc.expectedError, err)
 			assert.Equal(t, tc.expectedConfig, config)
-		})
-	}
-}
-
-func TestGetScannerMetadata(t *testing.T) {
-	testCases := []struct {
-		name            string
-		envs            Envs
-		expectedScanner harbor.Scanner
-	}{
-		{
-			name:            "Should return version set via env",
-			envs:            Envs{"TRIVY_VERSION": "0.1.6"},
-			expectedScanner: harbor.Scanner{Name: "Trivy", Vendor: "Aqua Security", Version: "0.1.6"},
-		},
-		{
-			name:            "Should return unknown version when it is not set via env",
-			expectedScanner: harbor.Scanner{Name: "Trivy", Vendor: "Aqua Security", Version: "Unknown"},
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			setEnvs(t, tc.envs)
-			assert.Equal(t, tc.expectedScanner, GetScannerMetadata())
 		})
 	}
 }

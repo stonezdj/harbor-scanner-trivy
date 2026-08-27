@@ -9,10 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
+	apiregistry "github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/opencontainers/go-digest"
 )
@@ -24,7 +24,7 @@ type RegistryConfig struct {
 }
 
 func (c RegistryConfig) GetRegistryAuth() (auth string, err error) {
-	authConfig := types.AuthConfig{
+	authConfig := apiregistry.AuthConfig{
 		Username: c.Username,
 		Password: c.Password,
 	}
@@ -48,12 +48,12 @@ func ReplicateImage(imageRef string, dest RegistryConfig) (d digest.Digest, err 
 	if err != nil {
 		return
 	}
-	pullOut, err := cli.ImagePull(ctx, imageRef, types.ImagePullOptions{})
+	pullOut, err := cli.ImagePull(ctx, imageRef, image.PullOptions{})
 	defer func() {
 		_ = pullOut.Close()
 	}()
 
-	_, err = io.Copy(ioutil.Discard, pullOut)
+	_, err = io.Copy(io.Discard, pullOut)
 	if err != nil {
 		return
 	}
@@ -69,14 +69,14 @@ func ReplicateImage(imageRef string, dest RegistryConfig) (d digest.Digest, err 
 	if err != nil {
 		return
 	}
-	pushOut, err := cli.ImagePush(ctx, targetImageRef, types.ImagePushOptions{RegistryAuth: auth})
+	pushOut, err := cli.ImagePush(ctx, targetImageRef, image.PushOptions{RegistryAuth: auth})
 	if err != nil {
 		return
 	}
 	defer func() {
 		_ = pushOut.Close()
 	}()
-	_, err = io.Copy(ioutil.Discard, pushOut)
+	_, err = io.Copy(io.Discard, pushOut)
 	inspect, err := cli.DistributionInspect(ctx, targetImageRef, auth)
 	if err != nil {
 		return
